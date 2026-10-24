@@ -1,0 +1,23 @@
+name: Knowledge base smoke tests
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Run knowledge base tests
+        run: node --test tests/*.cjs
+      - name: Check business configs
+        run: node tools/check-business.cjs
