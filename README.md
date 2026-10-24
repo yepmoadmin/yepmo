@@ -10,6 +10,10 @@ The template reads the CSV by header name, not column position. Required columns
 
 Only general business information intended for public release belongs in these files and sheets. Do not put customer or patient names, contact details, appointment histories, profiles, medical records, or personal conversations in the knowledge base. For healthcare-related businesses, keep published content to general business and operational information. Do not create diagnoses or personalised medical advice. AI-generated content remains a draft until a human approves it.
 
+## Website assistant
+
+Every business page has an **Ask a question** panel. It answers only by showing that business's approved answers word for word, refuses messages that contain personal details, redirects symptom questions to a practitioner for health businesses, and saves or sends nothing. See [the website assistant guide](docs/website-assistant.md).
+
 ## Existing AI draft workflow
 
 For the human pre-check and step-by-step process for the current Make setup, see [the AI draft workflow guide](docs/ai-draft-workflow.md).
@@ -71,7 +75,7 @@ With Node.js installed, run:
 node --test tests/*.cjs
 ```
 
-The page tests cover approval filtering, using the `Answer` column rather than the AI draft, independent business configs, invalid tenant slugs, fail-closed behaviour when no approved feed is configured, in-page navigation, and HTML escaping. The preflight tests cover each config and feed rule above using synthetic data only. GitHub Actions runs both the tests and the offline config check on every push and pull request.
+The page tests cover approval filtering, using the `Answer` column rather than the AI draft, independent business configs, invalid tenant slugs, fail-closed behaviour when no approved feed is configured, in-page navigation, and HTML escaping. The assistant tests cover natural-language matching, never showing drafts, refusing personal details, health redirects, escaping, and making no network requests. The preflight tests cover each config and feed rule above using synthetic data only. GitHub Actions runs both the tests and the offline config check on every push and pull request.
 
 ## Current limits
 

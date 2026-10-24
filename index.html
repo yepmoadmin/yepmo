@@ -97,6 +97,28 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 footer{border-top:1px solid var(--line);padding-block:26px;color:var(--muted);font-size:13px}
 @media (max-width:640px){.navlinks{display:none}.hero{padding-block:36px 20px}.search button{padding:11px 14px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.ask-open{position:fixed;right:max(18px,calc(env(safe-area-inset-right,0px) + 18px));bottom:calc(env(safe-area-inset-bottom,0px) + 18px);z-index:20;display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:600 15px var(--font-body);padding:13px 18px;box-shadow:0 8px 24px rgba(10,30,30,.22);cursor:pointer}
+.ask{position:fixed;right:max(18px,calc(env(safe-area-inset-right,0px) + 18px));bottom:calc(env(safe-area-inset-bottom,0px) + 18px);z-index:30;width:min(400px,calc(100vw - 36px));height:min(600px,calc(100dvh - 36px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:0 18px 50px rgba(10,30,30,.28);overflow:hidden}
+.ask-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.ask-head h2{font-size:18px;margin:0}
+.ask-close{border:0;background:transparent;color:var(--muted);font:400 26px/1 var(--font-body);cursor:pointer;padding:2px 6px;border-radius:8px}
+.ask-privacy{margin:0;padding:10px 16px;font-size:12.5px;line-height:1.45;color:var(--muted);background:var(--accent-soft)}
+.ask-log{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:88%;padding:10px 13px;border-radius:14px;font-size:15px;line-height:1.5;overflow-wrap:anywhere}
+.msg p{margin:0;white-space:pre-line}
+.msg.you{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;background:var(--bg);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg .src{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.msg .q{font-weight:600;margin-bottom:4px}
+.msg .help-links,.msg .suggest{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+.msg .button{padding:7px 12px;font-size:13px}
+.suggest button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 11px;font:500 13px var(--font-body);cursor:pointer;text-align:left}
+.suggest button:hover{border-color:var(--accent-ink)}
+.ask-form{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+.ask-form input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font:400 15px var(--font-body);background:var(--bg);color:var(--ink)}
+.ask-form input:focus{outline:0;border-color:var(--accent-ink)}
+.ask-form button{border:0;border-radius:12px;background:var(--accent);color:#fff;font:600 14px var(--font-body);padding:0 16px;cursor:pointer}
+@media (max-width:640px){.ask{right:0;left:0;bottom:0;width:100%;height:calc(100dvh - env(safe-area-inset-top,0px));border-radius:20px 20px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)}}
 </style>
 </head>
 <body>
@@ -141,6 +163,19 @@ footer{border-top:1px solid var(--line);padding-block:26px;color:var(--muted);fo
     </div>
   </section>
 </main>
+<button id="askOpen" class="ask-open" type="button" hidden aria-controls="askPanel" aria-expanded="false">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16v11H9l-5 4V5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+  <span id="askOpenLabel">Ask a question</span>
+</button>
+<section id="askPanel" class="ask" role="dialog" aria-modal="false" aria-labelledby="askTitle" hidden>
+  <div class="ask-head"><h2 id="askTitle">Ask a question</h2><button id="askClose" class="ask-close" type="button" aria-label="Close">×</button></div>
+  <p class="ask-privacy" id="askPrivacy">Answers come only from information the business has approved. Please don't type personal or medical details. Nothing you type is saved or sent anywhere.</p>
+  <div id="askLog" class="ask-log" aria-live="polite"></div>
+  <form id="askForm" class="ask-form" autocomplete="off">
+    <input id="askInput" type="text" maxlength="300" placeholder="Type your question" aria-label="Your question">
+    <button type="submit">Ask</button>
+  </form>
+</section>
 <footer><div class="wrap"><span id="footerName">Business Knowledge Base</span>. Answers are reviewed and approved by the business before they appear here.</div></footer>
 <script>
 const DEFAULT_CONFIG_PATH = "businesses/default.json";
@@ -252,6 +287,8 @@ function applyBusinessConfig(config, slug) {
   if (contactUrl) links.push(`<a class="button" href="${escapeHTML(contactUrl)}" rel="noopener">Contact ${escapeHTML(name)}</a>`);
   if (bookingUrl) links.push(`<a class="button primary" href="${escapeHTML(bookingUrl)}" rel="noopener">${escapeHTML(bookingLabel)}</a>`);
   helpLinksHtml = links.join(" ");
+  getElement("askTitle").textContent = `Ask ${name}`;
+  getElement("askPrivacy").textContent = `Answers come only from information ${name} has approved. Please don't type personal or medical details. Nothing you type is saved or sent anywhere.`;
   getElement("helpLinks").innerHTML = helpLinksHtml;
   getElement("help").hidden = links.length === 0;
 
@@ -394,6 +431,7 @@ async function loadKnowledgeBase() {
     searchInput.disabled = false;
     searchButton.disabled = false;
     setStatus(data.length ? "" : "No approved answers are available yet.");
+    getElement("askOpen").hidden = data.length === 0;
     openLinkedAnswer();
   } catch (error) {
     console.error("Knowledge base error:", error);
@@ -402,7 +440,153 @@ async function loadKnowledgeBase() {
     searchInput.disabled = true;
     searchButton.disabled = true;
     setStatus("This knowledge base is temporarily unavailable. Please try again later.", true);
+    getElement("askOpen").hidden = true;
+    getElement("askPanel").hidden = true;
   }
+}
+
+
+// ---------------------------------------------------------------------------
+// Website assistant
+// It answers only by showing approved answers word for word. It never writes
+// its own facts, never sends what the visitor types anywhere, and keeps the
+// conversation only in this open page.
+// ---------------------------------------------------------------------------
+const ASK_STOPWORDS = new Set(("a about am an and any anything are at be been can could did do does doing for from get got have has hi hello hey how i if im in is it its i'm me my need of on or our please should so tell than thank thanks that the their them then there this to us we what whats when where which who why will with would you your yours").split(" "));
+const ASK_SYNONYMS = [
+  ["price", "prices", "cost", "costs", "fee", "fees", "charge", "charges", "£", "much"],
+  ["open", "opening", "hours", "close", "closed", "closing", "times", "time"],
+  ["book", "booking", "appointment", "appointments", "session", "sessions", "reserve"],
+  ["cancel", "cancellation", "cancelling", "reschedule", "rearrange"],
+  ["park", "parking", "car"],
+  ["card", "contactless", "payment", "pay", "cash"],
+  ["wheelchair", "accessible", "accessibility", "step-free", "disabled"],
+  ["deliver", "delivery", "deliveries"],
+  ["allergy", "allergies", "allergen", "allergens", "gluten", "nut", "nuts", "dairy"],
+  ["insurance", "insurer", "insured", "bupa", "axa", "vitality"],
+  ["referral", "refer", "gp", "doctor"],
+  ["wear", "clothing", "clothes", "bring"]
+];
+const ASK_PERSONAL = [
+  /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i,
+  /(?:\+44\s?|\b0)(?:\d[\s-]?){9,10}\b/,
+  /\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i,
+  /\bmy name is\b|\bdate of birth\b|\bd\.?o\.?b\b|\bborn on\b|\bnhs number\b|\bmy address\b/i
+];
+const ASK_CLINICAL = /\b(pain|painful|hurts?|hurting|ache|aching|sore|injur(?:y|ies|ed)|swollen|swelling|sprain(?:ed)?|strain(?:ed)?|torn|tear|fracture|broken|diagnos\w*|symptoms?|numb(?:ness)?|tingl\w*|dizzy|what'?s wrong|is it serious|should i (?:see|rest|ice|stretch|exercise|take)|treat my|medication|painkillers?)\b/i;
+const ASK_URGENT = /\b(chest pain|can'?t breathe|cannot breathe|breathing|unconscious|collapsed|severe bleeding|bleeding heavily|emergency|head injury|stroke)\b/i;
+const ASK_GREETING = /^(hi|hello|hey|good (morning|afternoon|evening)|thanks|thank you|cheers)[!. ]*$/i;
+
+function askTerms(message) {
+  let text = fold(message);
+  if (/\bhow much\b/.test(text)) text += " price";
+  const groups = [];
+  for (const word of text.split(/[^a-z0-9£'-]+/)) {
+    const clean = word.replace(/^'+|'+$/g, "");
+    if (!clean || ASK_STOPWORDS.has(clean)) continue;
+    const stem = clean.length > 4 && clean.endsWith("s") ? clean.slice(0, -1) : clean;
+    const synonyms = ASK_SYNONYMS.find(group => group.includes(clean) || group.includes(stem));
+    const variants = new Set([stem, ...(synonyms || [])]);
+    if (!groups.some(group => [...variants].every(variant => group.has(variant)))) groups.push(variants);
+  }
+  return groups;
+}
+
+// Scores each approved answer; returns the best ones that cover enough of the question.
+function askMatches(message) {
+  const groups = askTerms(message);
+  if (!groups.length) return [];
+  const ranked = [];
+  for (const item of data) {
+    const question = fold(item.question);
+    const category = fold(item.category);
+    const answer = fold(item.answer);
+    let score = 0;
+    let covered = 0;
+    for (const group of groups) {
+      const hit = variant => variant.length >= 2 || variant === "£";
+      const inQ = [...group].some(v => hit(v) && question.includes(v));
+      const inC = [...group].some(v => hit(v) && category.includes(v));
+      const inA = [...group].some(v => hit(v) && answer.includes(v));
+      if (inQ || inC || inA) covered++;
+      score += (inQ ? 3 : 0) + (inC ? 2 : 0) + (inA ? 1 : 0);
+    }
+    const coverage = covered / groups.length;
+    if ((coverage >= 0.5 && score >= 2) || (coverage >= 1 / 3 && score >= 3)) ranked.push({ item, score: score * coverage });
+  }
+  ranked.sort((a, b) => b.score - a.score);
+  return ranked.map(entry => entry.item);
+}
+
+function askReply(message) {
+  const text = String(message || "").trim().slice(0, 300);
+  if (!text) return { kind: "empty" };
+  if (ASK_PERSONAL.some(pattern => pattern.test(text))) return { kind: "personal" };
+  if (ASK_GREETING.test(text)) return { kind: "greeting" };
+  const matches = askMatches(text);
+  if (business && business.healthcare === true && ASK_CLINICAL.test(text)) {
+    return { kind: "clinical", urgent: ASK_URGENT.test(text), related: matches.slice(0, 1) };
+  }
+  if (!matches.length) return { kind: "none" };
+  return { kind: "answer", answer: matches[0], related: matches.slice(1, 3) };
+}
+
+function askSuggestions(items) {
+  return items.length ? `<div class="suggest">${items.map(item =>
+    `<button type="button" data-ask="${escapeHTML(item.question)}">${escapeHTML(item.question)}</button>`).join("")}</div>` : "";
+}
+function askAnswerHtml(item) {
+  return `<span class="src">From ${escapeHTML(business.name)} · ${escapeHTML(item.category)}</span>
+    <div class="q">${escapeHTML(item.question)}</div><p>${escapeHTML(item.answer)}</p>`;
+}
+function askContact() {
+  return helpLinksHtml ? `<div class="help-links">${helpLinksHtml}</div>` : "";
+}
+function askTopicStarters() {
+  const seen = new Set();
+  return data.filter(item => !seen.has(item.category) && seen.add(item.category)).slice(0, 4);
+}
+
+function renderAskReply(reply) {
+  const name = escapeHTML(business ? business.name : "the business");
+  switch (reply.kind) {
+    case "personal":
+      return `<p>Please don't share personal details here. I can only give general information from ${name}, and I can't take bookings or pass messages on. To discuss your own situation, contact the team directly.</p>${askContact()}`;
+    case "greeting":
+      return `<p>Hello. Ask me about ${name}'s services, prices, opening hours, booking or policies.</p>${askSuggestions(askTopicStarters())}`;
+    case "clinical":
+      return `<p>I can't assess symptoms or give medical advice. A qualified practitioner at ${name} can assess you properly.</p>${reply.urgent ? "<p>If this is an emergency, call 999. For urgent medical help that is not an emergency, call NHS 111.</p>" : ""}${askContact()}${askSuggestions(reply.related)}`;
+    case "answer":
+      return `${askAnswerHtml(reply.answer)}${reply.related.length ? `<p class="src" style="margin-top:10px">Related</p>${askSuggestions(reply.related)}` : ""}`;
+    case "none":
+      return `<p>I don't have an approved answer to that yet. Try different words, or contact the team.</p>${askContact()}${askSuggestions(askTopicStarters())}`;
+    default:
+      return "";
+  }
+}
+
+function askAppend(role, html) {
+  const log = getElement("askLog");
+  log.innerHTML += `<div class="msg ${role}">${html}</div>`;
+  if (typeof log.scrollHeight === "number") log.scrollTop = log.scrollHeight;
+}
+function askSubmit(message) {
+  if (loadState !== "ready") return;
+  const reply = askReply(message);
+  if (reply.kind === "empty") return;
+  askAppend("you", reply.kind === "personal"
+    ? "<p><em>Message hidden because it looked like it contained personal details.</em></p>"
+    : `<p>${escapeHTML(String(message).trim().slice(0, 300))}</p>`);
+  askAppend("bot", renderAskReply(reply));
+}
+function askToggle(open) {
+  getElement("askPanel").hidden = !open;
+  getElement("askOpen").hidden = open || loadState !== "ready";
+  getElement("askOpen").setAttribute?.("aria-expanded", String(open));
+  if (open && !getElement("askLog").innerHTML) {
+    askAppend("bot", `<p>Hi. I can answer questions using ${escapeHTML(business.name)}'s approved information.</p>${askSuggestions(askTopicStarters())}`);
+  }
+  if (open) getElement("askInput").focus?.();
 }
 
 getElement("searchForm").addEventListener("submit", event => {
@@ -410,6 +594,21 @@ getElement("searchForm").addEventListener("submit", event => {
   searchKB();
 });
 getElement("searchInput").addEventListener("input", () => searchKB());
+getElement("askOpen").addEventListener("click", () => askToggle(true));
+getElement("askClose").addEventListener("click", () => askToggle(false));
+getElement("askForm").addEventListener("submit", event => {
+  event.preventDefault();
+  const input = getElement("askInput");
+  askSubmit(input.value);
+  input.value = "";
+});
+getElement("askLog").addEventListener("click", event => {
+  const button = event.target && event.target.closest ? event.target.closest("button[data-ask]") : null;
+  if (button) askSubmit(button.getAttribute("data-ask"));
+});
+document.addEventListener?.("keydown", event => {
+  if (event.key === "Escape" && !getElement("askPanel").hidden) askToggle(false);
+});
 loadKnowledgeBase();
 </script>
 </body>
